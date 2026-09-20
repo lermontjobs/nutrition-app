@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import OpenAI from 'openai'
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       // FormData with image file
       const formData = await req.formData()
       const file = formData.get('image') as File | null
-      if (!file) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
+      if (!file) return NextResponse.json({ error: '\u05DC\u05D0 \u05E0\u05E9\u05DC\u05D7\u05D4 \u05EA\u05DE\u05D5\u05E0\u05D4' }, { status: 400 })
       mimeType = file.type || 'image/jpeg'
       const buffer = await file.arrayBuffer()
       imageBase64 = Buffer.from(buffer).toString('base64')
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       const body = await req.json()
       imageBase64 = body.imageBase64
       mimeType = body.mimeType || 'image/jpeg'
-      if (!imageBase64) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
+      if (!imageBase64) return NextResponse.json({ error: '\u05DC\u05D0 \u05E0\u05E9\u05DC\u05D7\u05D4 \u05EA\u05DE\u05D5\u05E0\u05D4' }, { status: 400 })
     }
 
     const response = await openai.chat.completions.create({
@@ -62,7 +62,7 @@ Estimate portions based on visible plate size. All values are estimates.`
 
     const raw = response.choices[0]?.message?.content || ''
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return NextResponse.json({ error: 'Could not parse image' }, { status: 422 })
+    if (!jsonMatch) return NextResponse.json({ error: '\u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05E0\u05EA\u05D7 \u05D0\u05EA \u05D4\u05EA\u05DE\u05D5\u05E0\u05D4 - \u05D5\u05D3\u05D0\u05D9 \u05E9\u05D6\u05D5 \u05EA\u05DE\u05D5\u05E0\u05EA \u05D0\u05E8\u05D5\u05D7\u05D4' }, { status: 422 })
 
     const analysis = JSON.parse(jsonMatch[0])
     // Return in format diary page expects

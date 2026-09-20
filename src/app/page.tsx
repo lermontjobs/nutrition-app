@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
@@ -71,6 +71,9 @@ export default function Dashboard() {
   const [waterGlasses, setWaterGlasses] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showCamera, setShowCamera] = useState(false)
+  const [dailyMenu, setDailyMenu] = useState<any>(null)
+  const [menuLoading, setMenuLoading] = useState(false)
+  const [menuExpanded, setMenuExpanded] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -87,6 +90,16 @@ export default function Dashboard() {
     if (status === 'unauthenticated') { router.push('/auth/login'); return }
     if (session) fetchData()
   }, [session, status, fetchData, router])
+
+  const fetchMenu = async () => {
+    if (dailyMenu) { setMenuExpanded(e => !e); return }
+    setMenuLoading(true)
+    try {
+      const res = await fetch('/api/ai/daily-menu')
+      if (res.ok) { const d = await res.json(); if (d.meals) setDailyMenu(d); }
+    } finally { setMenuLoading(false) }
+    setMenuExpanded(true)
+  }
 
   const addWater = async () => {
     await fetch('/api/water', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 0.25 }) })
@@ -250,6 +263,53 @@ export default function Dashboard() {
               <p style={{ fontSize: '0.8125rem', color: '#BF360C', margin: '0.125rem 0 0' }}>יום פחות מדויק לא מוחק את ההתקדמות שלך</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Daily Menu Card */}
+      {goals && (
+        <div className='card animate-fade-up' style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: menuExpanded && dailyMenu ? '1rem' : 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+              <div style={{ width: '2.25rem', height: '2.25rem', background: 'linear-gradient(135deg, #FFE0B2, #FFF3E0)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem' }}>🍽️</div>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)', margin: 0 }}>תפריט יומי מומלץ</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-sub)', margin: 0 }}>מותאם אישית ל-{goals.dailyCalories} קק&quot;ל</p>
+              </div>
+            </div>
+            <button onClick={fetchMenu} disabled={menuLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', background: menuExpanded ? 'var(--primary-light)' : 'var(--primary)', color: menuExpanded ? 'var(--primary)' : 'white', border: 'none', borderRadius: '12px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.8125rem', fontFamily: 'inherit' }}>
+              {menuLoading ? '⏳ טוענת...' : menuExpanded ? 'סגרי ▲' : '✨ הצגי תפריט'}
+            </button>
+          </div>
+          {menuExpanded && dailyMenu && (
+            <div>
+              {dailyMenu.meals?.map((meal: any, i: number) => (
+                <div key={i} style={{ borderTop: i > 0 ? '1px solid #F0EEF9' : 'none', paddingTop: i > 0 ? '0.75rem' : 0, marginTop: i > 0 ? '0.75rem' : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.25rem' }}>{meal.emoji}</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-main)' }}>{meal.name}</span>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.125rem 0.5rem', borderRadius: '10px', fontWeight: 600 }}>{meal.calories} קק&quot;ל</span>
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', marginBottom: '0.25rem' }}>
+                    {meal.items?.join(' · ')}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-sub)' }}>
+                    <span>💪 {meal.protein}ג</span>
+                    <span>🌾 {meal.carbs}ג</span>
+                    <span>⏱ {meal.prepTime} דק'</span>
+                  </div>
+                </div>
+              ))}
+              {dailyMenu.nutritionNote && (
+                <div style={{ marginTop: '1rem', background: '#F0FAD6', borderRadius: '12px', padding: '0.75rem', fontSize: '0.8125rem', color: '#3D6B00', lineHeight: 1.5 }}>
+                  💡 {dailyMenu.nutritionNote}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
