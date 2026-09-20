@@ -226,7 +226,7 @@ export default function DiaryPage() {
     </div>
   )
 
-  const resultItems = textResult?.items || photoResult?.items || photoResult?.totals ? [photoResult?.totals] : []
+  const resultItems = textResult?.items || photoResult?.items || []
   const activeResult = textResult || photoResult
 
   return (
@@ -392,7 +392,7 @@ export default function DiaryPage() {
             {/* PHOTO MODE */}
             {photoMode && (
               <div>
-                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileSelect} style={{ display: 'none' }} capture="environment" />
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileSelect} style={{ display: 'none' }} />
                 {!photoPreview ? (
                   <div
                     onClick={() => fileInputRef.current?.click()}
