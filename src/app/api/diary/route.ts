@@ -16,8 +16,8 @@ export async function GET(req: Request) {
   nextDay.setDate(nextDay.getDate() + 1)
 
   // Get daily plan
-  const plan = await prisma.dailyPlan.findUnique({
-    where: { userId_date: { userId: session.user.id, date } },
+  const plan = await prisma.dailyPlan.findFirst({
+    where: { userId: session.user.id, date },
     include: { meals: { include: { meal: { include: { items: { include: { food: true } } } } }, orderBy: { order: 'asc' } } },
   })
 
@@ -65,8 +65,8 @@ export async function POST(req: Request) {
   date.setHours(0, 0, 0, 0)
 
   // Upsert daily plan
-  let plan = await prisma.dailyPlan.findUnique({
-    where: { userId_date: { userId: session.user.id, date } },
+  let plan = await prisma.dailyPlan.findFirst({
+    where: { userId: session.user.id, date },
   })
   if (!plan) {
     plan = await prisma.dailyPlan.create({ data: { userId: session.user.id, date } })

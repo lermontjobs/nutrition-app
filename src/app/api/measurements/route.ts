@@ -24,11 +24,13 @@ export async function POST(req: Request) {
   const date = new Date(body.date)
   date.setHours(0, 0, 0, 0)
 
-  const measurement = await prisma.bodyMeasurement.upsert({
-    where: { userId_date: { userId: session.user.id, date } },
-    update: { ...body, userId: undefined, date: undefined },
-    create: { ...body, userId: session.user.id, date },
-  })
+  const existing = await prisma.bodyMeasurement.findFirst({ where: { userId: session.user.id, date } })
+  let measurement
+  if (existing) {
+    measurement = await prisma.bodyMeasurement.update({ where: { id: existing.id }, data: { ...body, userId: undefined, date: undefined } })
+  } else {
+    measurement = await prisma.bodyMeasurement.create({ data: { ...body, userId: session.user.id, date } })
+  }
 
   return NextResponse.json(measurement)
 }
