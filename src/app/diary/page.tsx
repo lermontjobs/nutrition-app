@@ -1,246 +1,123 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
-import { ChevronRight, ChevronLeft, Plus, Check, RefreshCw, Edit2, Star, AlertCircle, X, Flame } from 'lucide-react'
-import { MEAL_TYPE_LABELS } from '@/types'
-import { MacroBar } from '@/components/ui/MacroBar'
+import { useRouter } from 'next/navigation'
+import { ChevronRight, ChevronLeft, Plus, X, Camera, Sparkles, Loader2, Check, Trash2, AlertCircle } from 'lucide-react'
 
-type MealStatus = 'planned' | 'eaten_full' | 'eaten_partial' | 'skipped' | 'replaced'
-
-interface FoodItem {
-  name: string
+interface LogEntry {
+  id: string
+  foodName: string
   quantity: number
   unit: string
   calories: number
   protein: number
   carbs: number
   fat: number
-}
-
-interface DiaryMeal {
-  id: string
-  name: string
   mealType: string
-  status: MealStatus
-  items: FoodItem[]
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  prepTime: number
-  instructions?: string
+  isEstimated?: boolean
 }
 
-const mockMeals: DiaryMeal[] = [
-  {
-    id: '1', name: 'ארוחת בוקר', mealType: 'breakfast', status: 'eaten_full',
-    calories: 420, protein: 32, carbs: 45, fat: 12, prepTime: 10,
-    instructions: 'ערבב ביצים עם ירקות. צלה במחבת עם מעט שמן.',
-    items: [
-      { name: 'חביתה (2 ביצים)', quantity: 120, unit: 'ג', calories: 180, protein: 14, carbs: 1, fat: 13 },
-      { name: 'גבינה לבנה 5%', quantity: 100, unit: 'ג', calories: 80, protein: 10, carbs: 3, fat: 3 },
-      { name: 'לחם מחיטה מלאה', quantity: 60, unit: 'ג', calories: 140, protein: 5, carbs: 26, fat: 2 },
-      { name: 'עגבנייה', quantity: 100, unit: 'ג', calories: 20, protein: 1, carbs: 4, fat: 0 },
-    ],
-  },
-  {
-    id: '2', name: 'ארוחת ביניים', mealType: 'morning_snack', status: 'eaten_full',
-    calories: 180, protein: 15, carbs: 20, fat: 4, prepTime: 2,
-    items: [
-      { name: 'גביע קוטג\'', quantity: 200, unit: 'ג', calories: 140, protein: 14, carbs: 6, fat: 4 },
-      { name: 'תפוח', quantity: 150, unit: 'ג', calories: 80, protein: 0, carbs: 21, fat: 0 },
-    ],
-  },
-  {
-    id: '3', name: 'ארוחת צהריים', mealType: 'lunch', status: 'planned',
-    calories: 580, protein: 48, carbs: 60, fat: 14, prepTime: 20,
-    instructions: 'צלה חזה עוף עם תבלינים. בשל אורז לפי הוראות. הגש עם ירקות.',
-    items: [
-      { name: 'חזה עוף', quantity: 200, unit: 'ג', calories: 220, protein: 42, carbs: 0, fat: 5 },
-      { name: 'אורז לבן מבושל', quantity: 200, unit: 'ג', calories: 240, protein: 4, carbs: 52, fat: 0 },
-      { name: 'ברוקולי מאודה', quantity: 150, unit: 'ג', calories: 50, protein: 4, carbs: 8, fat: 0 },
-      { name: 'שמן זית', quantity: 10, unit: 'מ"ל', calories: 90, protein: 0, carbs: 0, fat: 10 },
-    ],
-  },
-  {
-    id: '4', name: 'ארוחת אחה"צ', mealType: 'afternoon_snack', status: 'planned',
-    calories: 200, protein: 20, carbs: 15, fat: 6, prepTime: 5,
-    items: [
-      { name: 'יוגורט יווני', quantity: 170, unit: 'ג', calories: 100, protein: 17, carbs: 6, fat: 0 },
-      { name: 'שקדים', quantity: 25, unit: 'ג', calories: 145, protein: 5, carbs: 5, fat: 13 },
-    ],
-  },
-  {
-    id: '5', name: 'ארוחת ערב', mealType: 'dinner', status: 'planned',
-    calories: 520, protein: 40, carbs: 45, fat: 18, prepTime: 25,
-    items: [
-      { name: 'סלמון אפוי', quantity: 150, unit: 'ג', calories: 250, protein: 35, carbs: 0, fat: 12 },
-      { name: 'בטטה צלויה', quantity: 200, unit: 'ג', calories: 180, protein: 3, carbs: 41, fat: 0 },
-      { name: 'סלט ירוק', quantity: 100, unit: 'ג', calories: 30, protein: 2, carbs: 5, fat: 0 },
-      { name: 'טחינה', quantity: 20, unit: 'ג', calories: 120, protein: 3, carbs: 3, fat: 11 },
-    ],
-  },
+interface DayLog {
+  id: string
+  date: string
+  mealType: string
+  logEntries: LogEntry[]
+}
+
+const MEAL_TYPES = [
+  { key: 'breakfast', label: '\u05D1\u05D5\u05E7\u05E8', emoji: '\u2600\uFE0F' },
+  { key: 'morning_snack', label: '\u05E0\u05E9\u05E0\u05E9 \u05D1\u05D5\u05E7\u05E8', emoji: '\u{1F34E}' },
+  { key: 'lunch', label: '\u05E6\u05D4\u05E8\u05D9\u05D9\u05DD', emoji: '\u{1F957}' },
+  { key: 'afternoon_snack', label: '\u05E0\u05E9\u05E0\u05E9 \u05D0\u05D7\u05D4"\u05E6', emoji: '\u{1F330}' },
+  { key: 'dinner', label: '\u05E2\u05E8\u05D1', emoji: '\u{1F319}' },
 ]
 
-const goals = { dailyCalories: 2000, dailyProtein: 150, dailyCarbs: 200, dailyFat: 65 }
-
-const statusConfig: Record<MealStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  planned: { label: 'מתוכנן', color: 'text-slate-500', icon: null },
-  eaten_full: { label: 'נאכל במלואו', color: 'text-green-600', icon: <Check size={14} /> },
-  eaten_partial: { label: 'נאכל חלקית', color: 'text-yellow-600', icon: <Check size={14} /> },
-  skipped: { label: 'לא נאכל', color: 'text-red-500', icon: <X size={14} /> },
-  replaced: { label: 'הוחלף', color: 'text-blue-500', icon: <RefreshCw size={14} /> },
-}
-
-function MealCard({ meal, onStatusChange }: { meal: DiaryMeal; onStatusChange: (id: string, status: MealStatus) => void }) {
-  const [expanded, setExpanded] = useState(false)
-  const [showReplace, setShowReplace] = useState(false)
-
-  const bgClass = {
-    planned: 'bg-white dark:bg-slate-800',
-    eaten_full: 'bg-green-50 dark:bg-green-900/10',
-    eaten_partial: 'bg-yellow-50 dark:bg-yellow-900/10',
-    skipped: 'bg-red-50 dark:bg-red-900/10',
-    replaced: 'bg-blue-50 dark:bg-blue-900/10',
-  }[meal.status]
-
-  const sc = statusConfig[meal.status]
-
-  return (
-    <div className={`rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden ${bgClass}`}>
-      {/* Header */}
-      <div className="p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded-full ${
-              meal.status === 'eaten_full' ? 'bg-green-100 text-green-700' :
-              meal.status === 'eaten_partial' ? 'bg-yellow-100 text-yellow-700' :
-              meal.status === 'skipped' ? 'bg-red-100 text-red-700' :
-              meal.status === 'replaced' ? 'bg-blue-100 text-blue-700' :
-              'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-            }`}>
-              {sc.icon}{sc.label}
-            </div>
-          </div>
-          <span className="text-xs text-slate-400">{MEAL_TYPE_LABELS[meal.mealType]}</span>
-        </div>
-        <div className="mt-2 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-800 dark:text-white">{meal.name}</h3>
-          <div className="flex items-center gap-1 text-sm font-bold text-slate-700 dark:text-slate-200">
-            <Flame size={14} className="text-orange-400" />
-            {meal.calories} קק"ל
-          </div>
-        </div>
-        <div className="mt-1 flex gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>💪 {meal.protein}ג</span>
-          <span>🌾 {meal.carbs}ג</span>
-          <span>🧈 {meal.fat}ג</span>
-          <span>⏱ {meal.prepTime} דק'</span>
-        </div>
-      </div>
-
-      {/* Expanded */}
-      {expanded && (
-        <div className="border-t border-slate-100 dark:border-slate-700 px-4 pb-4">
-          {/* Items */}
-          <div className="mt-3 space-y-2">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">מרכיבים</p>
-            {meal.items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-slate-700 dark:text-slate-300">{item.name}</span>
-                <div className="flex items-center gap-3 text-xs text-slate-500">
-                  <span>{item.quantity}{item.unit}</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">{item.calories} קק"ל</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Instructions */}
-          {meal.instructions && (
-            <div className="mt-3">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">הכנה</p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">{meal.instructions}</p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="mt-4 space-y-2">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">סמן סטטוס</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(['eaten_full', 'eaten_partial', 'skipped', 'replaced'] as MealStatus[]).map(s => (
-                <button
-                  key={s}
-                  onClick={() => onStatusChange(meal.id, s)}
-                  className={`py-2 rounded-xl text-xs font-medium transition-colors border-2 ${
-                    meal.status === s ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400' :
-                    'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}>
-                  {statusConfig[s].label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => setShowReplace(true)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                <RefreshCw size={14} />
-                החלפת ארוחה
-              </button>
-              <button className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                <Star size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Replace Modal */}
-      {showReplace && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-md p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800 dark:text-white">החלפת ארוחה</h3>
-              <button onClick={() => setShowReplace(false)}><X size={20} className="text-slate-500" /></button>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">חלופות דומות ל-{meal.name}:</p>
-            {[
-              { name: 'שניצל הודו עם תפוחי אדמה', calories: 560, protein: 46, diff: '+20 קק"ל' },
-              { name: 'דג בקלה מאודה עם ירקות', calories: 480, protein: 44, diff: '-100 קק"ל' },
-              { name: 'פסטה עוף ברוטב עגבניות', calories: 590, protein: 42, diff: '+10 קק"ל' },
-            ].map((alt, i) => (
-              <div key={i} className="border border-slate-200 dark:border-slate-600 rounded-xl p-3 mb-2 cursor-pointer hover:border-primary-400 transition-colors"
-                onClick={() => { onStatusChange(meal.id, 'replaced'); setShowReplace(false) }}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-200 text-sm">{alt.name}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${alt.diff.startsWith('-') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{alt.diff}</span>
-                </div>
-                <div className="flex gap-3 mt-1 text-xs text-slate-500">
-                  <span>🔥 {alt.calories} קק"ל</span>
-                  <span>💪 {alt.protein}ג חלבון</span>
-                </div>
-              </div>
-            ))}
-            <p className="text-xs text-slate-400 text-center mt-2">לחץ על חלופה לאישור ההחלפה</p>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+const MEAL_LABELS: Record<string, string> = {
+  breakfast: '\u05D1\u05D5\u05E7\u05E8',
+  morning_snack: '\u05E0\u05E9\u05E0\u05E9 \u05D1\u05D5\u05E7\u05E8',
+  lunch: '\u05E6\u05D4\u05E8\u05D9\u05D9\u05DD',
+  afternoon_snack: '\u05E0\u05E9\u05E0\u05E9 \u05D0\u05D7\u05D4"\u05E6',
+  dinner: '\u05E2\u05E8\u05D1',
 }
 
 export default function DiaryPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [date, setDate] = useState(new Date())
-  const [meals, setMeals] = useState<DiaryMeal[]>(mockMeals)
+  const [logs, setLogs] = useState<DayLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [goals, setGoals] = useState({ dailyCalories: 2000, dailyProtein: 150, dailyCarbs: 200, dailyFat: 65 })
 
-  if (status === 'loading') return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div></div>
-  if (!session) { redirect('/auth/login'); return null }
+  // Add meal modal state
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [addMealType, setAddMealType] = useState('breakfast')
 
-  const eaten = meals.filter(m => m.status === 'eaten_full' || m.status === 'eaten_partial')
-  const eatenCals = eaten.reduce((s, m) => s + (m.status === 'eaten_partial' ? m.calories * 0.7 : m.calories), 0)
-  const eatenProtein = eaten.reduce((s, m) => s + (m.status === 'eaten_partial' ? m.protein * 0.7 : m.protein), 0)
-  const plannedCals = meals.reduce((s, m) => s + (m.status !== 'skipped' ? m.calories : 0), 0)
+  // Text input mode
+  const [textInput, setTextInput] = useState('')
+  const [textLoading, setTextLoading] = useState(false)
+  const [textResult, setTextResult] = useState<any>(null)
+  const [textError, setTextError] = useState('')
+
+  // Photo mode
+  const [photoMode, setPhotoMode] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoResult, setPhotoResult] = useState<any>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Saving
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') { router.push('/auth/login'); return }
+    if (session) { fetchLogs(); fetchGoals() }
+  }, [session, status, date])
+
+  const dateStr = date.toISOString().split('T')[0]
+
+  const fetchLogs = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/diary?date=${dateStr}`)
+      if (res.ok) {
+        const d = await res.json()
+        // API returns flat logs array; group by mealType into DayLog format
+        const rawLogs: any[] = d.logs || []
+        const grouped: Record<string, DayLog> = {}
+        rawLogs.forEach((log: any) => {
+          const mt = log.mealType || 'breakfast'
+          if (!grouped[mt]) grouped[mt] = { id: mt, date: dateStr, mealType: mt, logEntries: [] }
+          grouped[mt].logEntries.push({
+            id: log.id,
+            foodName: log.food?.name || log.foodName || '\u05D0\u05D5\u05DB\u05DC',
+            quantity: log.quantity || 0,
+            unit: log.unit || '\u05D2',
+            calories: log.calories || 0,
+            protein: log.protein || 0,
+            carbs: log.carbs || 0,
+            fat: log.fat || 0,
+            mealType: mt,
+            isEstimated: !!(log.notes && log.notes.includes('AI')),
+          })
+        })
+        setLogs(Object.values(grouped))
+      }
+    } finally { setLoading(false) }
+  }
+
+  const fetchGoals = async () => {
+    const res = await fetch('/api/goals')
+    if (res.ok) {
+      const d = await res.json()
+      if (d.goals) setGoals({
+        dailyCalories: d.goals.dailyCalories || 2000,
+        dailyProtein: d.goals.dailyProtein || 150,
+        dailyCarbs: d.goals.dailyCarbs || 200,
+        dailyFat: d.goals.dailyFat || 65,
+      })
+    }
+  }
 
   const navigate = (d: number) => {
     const nd = new Date(date)
@@ -248,77 +125,366 @@ export default function DiaryPage() {
     setDate(nd)
   }
 
-  const handleStatusChange = (id: string, s: MealStatus) => {
-    setMeals(ms => ms.map(m => m.id === id ? { ...m, status: s } : m))
-  }
-
   const isToday = date.toDateString() === new Date().toDateString()
 
+  // Totals
+  const allEntries = logs.flatMap(l => l.logEntries)
+  const totalCals = Math.round(allEntries.reduce((s, e) => s + e.calories, 0))
+  const totalProtein = Math.round(allEntries.reduce((s, e) => s + e.protein, 0))
+  const totalCarbs = Math.round(allEntries.reduce((s, e) => s + e.carbs, 0))
+  const totalFat = Math.round(allEntries.reduce((s, e) => s + e.fat, 0))
+
+  // Group by meal type
+  const grouped: Record<string, LogEntry[]> = {}
+  logs.forEach(log => {
+    if (!grouped[log.mealType]) grouped[log.mealType] = []
+    grouped[log.mealType].push(...log.logEntries)
+  })
+
+  // Analyze free text via AI
+  const analyzeText = async () => {
+    if (!textInput.trim()) return
+    setTextLoading(true)
+    setTextError('')
+    setTextResult(null)
+    try {
+      const res = await fetch('/api/ai/analyze-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textInput }),
+      })
+      const d = await res.json()
+      if (d.items) setTextResult(d)
+      else setTextError(d.error || '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E0\u05D9\u05EA\u05D5\u05D7')
+    } catch { setTextError('\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D7\u05D9\u05D1\u05D5\u05E8') }
+    finally { setTextLoading(false) }
+  }
+
+  // Analyze photo
+  const analyzePhoto = async (file: File) => {
+    setPhotoLoading(true)
+    setPhotoResult(null)
+    const formData = new FormData()
+    formData.append('image', file)
+    try {
+      const res = await fetch('/api/ai/analyze-meal', { method: 'POST', body: formData })
+      const d = await res.json()
+      if (d.items || d.totals) setPhotoResult(d)
+      else setTextError(d.error || '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E0\u05D9\u05EA\u05D5\u05D7 \u05EA\u05DE\u05D5\u05E0\u05D4')
+    } catch { setTextError('\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D7\u05D9\u05D1\u05D5\u05E8') }
+    finally { setPhotoLoading(false) }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setPhotoPreview(url)
+    analyzePhoto(file)
+  }
+
+  // Save entries to diary
+  const saveEntries = async (items: any[]) => {
+    setSaving(true)
+    try {
+      for (const item of items) {
+        await fetch('/api/diary/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: dateStr,
+            mealType: addMealType,
+            foodName: item.name,
+            quantity: item.quantity || 100,
+            unit: item.unit || '\u05D2\u05E8\u05DD',
+            calories: Math.round(item.calories || 0),
+            protein: Math.round(item.protein || 0),
+            carbs: Math.round(item.carbs || 0),
+            fat: Math.round(item.fat || 0),
+            isEstimated: true,
+          }),
+        })
+      }
+      await fetchLogs()
+      setShowAddModal(false)
+      setTextInput('')
+      setTextResult(null)
+      setPhotoResult(null)
+      setPhotoPreview(null)
+      setPhotoMode(false)
+    } finally { setSaving(false) }
+  }
+
+  const deleteEntry = async (logId: string) => {
+    await fetch(`/api/diary/log?id=${logId}`, { method: 'DELETE' })
+    fetchLogs()
+  }
+
+  if (status === 'loading') return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '16rem' }}>
+      <Loader2 size={32} style={{ color: 'var(--primary)', animation: 'spin 1s linear infinite' }} />
+    </div>
+  )
+
+  const resultItems = textResult?.items || photoResult?.items || photoResult?.totals ? [photoResult?.totals] : []
+  const activeResult = textResult || photoResult
+
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '0.25rem', paddingBottom: '2rem' }}>
+
       {/* Date Nav */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700">
-          <ChevronRight size={20} className="text-slate-600 dark:text-slate-300" />
+      <div className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button onClick={() => navigate(-1)} style={{ width: '2.25rem', height: '2.25rem', borderRadius: '10px', background: 'var(--primary-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ChevronRight size={20} style={{ color: 'var(--primary)' }} />
         </button>
-        <div className="text-center">
-          <p className="font-semibold text-slate-800 dark:text-white">
-            {isToday ? 'היום' : date.toLocaleDateString('he-IL', { weekday: 'long' })}
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontWeight: 700, color: 'var(--text-main)', margin: 0, fontSize: '1rem' }}>
+            {isToday ? '\u05D4\u05D9\u05D5\u05DD' : date.toLocaleDateString('he-IL', { weekday: 'long' })}
           </p>
-          <p className="text-xs text-slate-500">{date.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0 }}>
+            {date.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
         </div>
-        <button onClick={() => navigate(1)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700">
-          <ChevronLeft size={20} className="text-slate-600 dark:text-slate-300" />
+        <button onClick={() => navigate(1)} style={{ width: '2.25rem', height: '2.25rem', borderRadius: '10px', background: 'var(--primary-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ChevronLeft size={20} style={{ color: 'var(--primary)' }} />
         </button>
       </div>
 
       {/* Daily summary */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
-        <div className="flex justify-between items-center mb-3">
-          <span className="font-semibold text-slate-700 dark:text-slate-200">סיכום יומי</span>
-          <span className={`text-sm font-bold ${Math.round(goals.dailyCalories - eatenCals) < 0 ? 'text-red-500' : 'text-green-600'}`}>
-            נותר: {Math.round(goals.dailyCalories - eatenCals)} קק"ל
+      <div className="card" style={{ padding: '1.125rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+          <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>\u05E1\u05D9\u05DB\u05D5\u05DD \u05D9\u05D5\u05DE\u05D9</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: totalCals > goals.dailyCalories ? 'var(--coral)' : 'var(--lime)', background: totalCals > goals.dailyCalories ? 'var(--coral-light)' : '#F0FAD6', padding: '0.25rem 0.75rem', borderRadius: '20px' }}>
+            {Math.max(0, goals.dailyCalories - totalCals)} \u05E7\u05E7"\u05DC \u05E0\u05D5\u05EA\u05E8\u05D5
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.875rem' }}>
           {[
-            { label: 'יעד', value: goals.dailyCalories, unit: 'קק"ל', color: 'text-slate-700 dark:text-slate-200' },
-            { label: 'תוכנן', value: Math.round(plannedCals), unit: 'קק"ל', color: 'text-blue-600' },
-            { label: 'נאכל', value: Math.round(eatenCals), unit: 'קק"ל', color: 'text-green-600' },
-            { label: 'נותר', value: Math.max(0, Math.round(goals.dailyCalories - eatenCals)), unit: 'קק"ל', color: 'text-orange-500' },
-          ].map(({ label, value, unit, color }) => (
-            <div key={label} className="text-center">
-              <p className={`text-lg font-bold ${color}`}>{value}</p>
-              <p className="text-xs text-slate-400">{unit}</p>
-              <p className="text-xs text-slate-500">{label}</p>
+            { label: '\u05E7\u05DC\u05D5\u05E8\u05D9\u05D5\u05EA', value: totalCals, target: goals.dailyCalories, color: 'var(--primary)' },
+            { label: '\u05D7\u05DC\u05D1\u05D5\u05DF', value: totalProtein, target: goals.dailyProtein, color: '#3B82F6' },
+            { label: '\u05E4\u05D7\u05DE\u05D9\u05DE\u05D5\u05EA', value: totalCarbs, target: goals.dailyCarbs, color: 'var(--orange)' },
+            { label: '\u05E9\u05D5\u05DE\u05DF', value: totalFat, target: goals.dailyFat, color: 'var(--teal)' },
+          ].map(({ label, value, target, color }) => (
+            <div key={label} style={{ textAlign: 'center', background: '#F8F7FF', borderRadius: '12px', padding: '0.625rem 0.375rem' }}>
+              <p style={{ fontSize: '1.125rem', fontWeight: 900, color, margin: 0, lineHeight: 1 }}>{value}</p>
+              <p style={{ fontSize: '0.6rem', color: 'var(--text-sub)', margin: '0.2rem 0 0' }}>{label}</p>
+              <div style={{ height: '3px', background: '#EDE9FE', borderRadius: '100px', marginTop: '0.375rem', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: color, width: `${Math.min(100, (value / target) * 100)}%`, borderRadius: '100px' }} />
+              </div>
             </div>
           ))}
         </div>
-        <div className="space-y-2">
-          <MacroBar label="חלבון" value={eatenProtein} target={goals.dailyProtein} color="bg-blue-500" />
+      </div>
+
+      {/* Meals list */}
+      {MEAL_TYPES.map(({ key, label, emoji }) => {
+        const entries = grouped[key] || []
+        const mealCals = Math.round(entries.reduce((s, e) => s + e.calories, 0))
+        return (
+          <div key={key} className="card" style={{ padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: entries.length > 0 ? '0.75rem' : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>{emoji}</span>
+                <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>{label}</span>
+                {mealCals > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', background: '#F0EEF9', padding: '0.125rem 0.5rem', borderRadius: '20px' }}>{mealCals} \u05E7\u05E7"\u05DC</span>}
+              </div>
+              <button
+                onClick={() => { setAddMealType(key); setShowAddModal(true); setTextInput(''); setTextResult(null); setPhotoResult(null); setPhotoPreview(null); setPhotoMode(false); setTextError('') }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--primary-light)', border: 'none', borderRadius: '10px', padding: '0.375rem 0.75rem', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8125rem', fontFamily: 'inherit' }}>
+                <Plus size={14} />
+                \u05D4\u05D5\u05E1\u05D9\u05E4\u05D9
+              </button>
+            </div>
+
+            {entries.length === 0 && (
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0, textAlign: 'center', padding: '0.5rem 0' }}>
+                \u05DC\u05D0 \u05E0\u05E8\u05E9\u05DD \u05E2\u05D3\u05D9\u05D9\u05DF
+              </p>
+            )}
+
+            {entries.map((entry, i) => (
+              <div key={entry.id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', borderTop: i === 0 ? '1px solid #F0EEF9' : '1px solid #F8F7FF' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>{entry.foodName}</span>
+                    {entry.isEstimated && <span style={{ fontSize: '0.625rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.375rem', borderRadius: '8px' }}>~\u05D0\u05D9\u05DE\u05D5\u05D3</span>}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>{entry.quantity}{entry.unit} · {entry.calories} \u05E7\u05E7"\u05DC · \u05D7\u05DC\u05D1 {entry.protein}\u05D2</span>
+                </div>
+                <button onClick={() => deleteEntry(entry.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E0D8F0', padding: '0.25rem' }}>
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+
+      {/* Disclaimer */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: '14px', padding: '0.875rem' }}>
+        <AlertCircle size={15} style={{ color: '#D97706', flexShrink: 0, marginTop: '0.125rem' }} />
+        <p style={{ fontSize: '0.75rem', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+          \u05D1\u05DC\u05D9\u05DC\u05D5\u05EA \u05E2\u05D9\u05D3\u05D5\u05D9 AI \u05D4\u05DD \u05D0\u05D9\u05DE\u05D5\u05D3\u05D9\u05DD. \u05D4\u05DE\u05E2\u05E8\u05DB\u05EA \u05D0\u05D9\u05E0\u05D4 \u05DE\u05D7\u05DC\u05D9\u05E4\u05D4 \u05D9\u05D9\u05E2\u05D5\u05E5 \u05EA\u05D6\u05D5\u05E0\u05D0\u05D9 \u05DE\u05E7\u05E6\u05D5\u05E2\u05D9.
+        </p>
+      </div>
+
+      {/* ADD MEAL MODAL */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ background: 'white', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', padding: '1.5rem 1.25rem 2rem' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-main)', margin: 0 }}>\u05D4\u05D5\u05E1\u05E4\u05D9 \u05D0\u05E8\u05D5\u05D7\u05D4</h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0 }}>\u05DC\u05D0\u05E8\u05D5\u05D7\u05EA {MEAL_LABELS[addMealType]}</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} style={{ background: '#F0EEF9', border: 'none', borderRadius: '10px', width: '2rem', height: '2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={16} style={{ color: 'var(--primary)' }} />
+              </button>
+            </div>
+
+            {/* Meal type selector */}
+            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
+              {MEAL_TYPES.map(({ key, label, emoji }) => (
+                <button key={key} onClick={() => setAddMealType(key)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.875rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.8125rem', whiteSpace: 'nowrap', flexShrink: 0, background: addMealType === key ? 'var(--primary)' : 'var(--primary-light)', color: addMealType === key ? 'white' : 'var(--primary)', transition: 'all 0.2s' }}>
+                  {emoji} {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Mode toggle */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '1.25rem' }}>
+              <button onClick={() => { setPhotoMode(false); setPhotoResult(null); setPhotoPreview(null) }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '14px', border: `2px solid ${!photoMode ? 'var(--primary)' : '#EDE9FE'}`, background: !photoMode ? 'var(--primary-light)' : 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.875rem', color: !photoMode ? 'var(--primary)' : 'var(--text-sub)' }}>
+                <Sparkles size={16} />
+                \u05EA\u05D9\u05D0\u05D5\u05E8 \u05D1\u05D8\u05E7\u05E1\u05D8
+              </button>
+              <button onClick={() => { setPhotoMode(true); setTextResult(null) }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '14px', border: `2px solid ${photoMode ? 'var(--primary)' : '#EDE9FE'}`, background: photoMode ? 'var(--primary-light)' : 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.875rem', color: photoMode ? 'var(--primary)' : 'var(--text-sub)' }}>
+                <Camera size={16} />
+                \u05E6\u05D9\u05DC\u05D5\u05DD / \u05EA\u05DE\u05D5\u05E0\u05D4
+              </button>
+            </div>
+
+            {/* TEXT MODE */}
+            {!photoMode && (
+              <div>
+                <textarea
+                  value={textInput}
+                  onChange={e => setTextInput(e.target.value)}
+                  placeholder="\u05DC\u05D3\u05D5\u05D2\u05DE\u05D0: \u05D0\u05DB\u05DC\u05EA\u05D9 \u05E9\u05E0\u05D9 \u05D7\u05D1\u05D9\u05EA\u05D5\u05EA \u05E2\u05DD \u05D2\u05D1\u05D9\u05E0\u05D4 \u05DC\u05D1\u05E0\u05D4, \u05E4\u05E8\u05D5\u05E1\u05EA \u05DC\u05D7\u05DD \u05DE\u05D7\u05D9\u05D8\u05D4 \u05DE\u05DC\u05D0\u05D4 \u05D5\u05E7\u05E4\u05D4"
+                  rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.875rem', borderRadius: '14px', border: '2px solid #EDE9FE', fontFamily: 'Heebo, sans-serif', fontSize: '0.9375rem', resize: 'none', outline: 'none', color: 'var(--text-main)', direction: 'rtl' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                  onBlur={e => e.target.style.borderColor = '#EDE9FE'}
+                />
+                <button
+                  onClick={analyzeText}
+                  disabled={textLoading || !textInput.trim()}
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.875rem', borderRadius: '14px', border: 'none', background: textLoading || !textInput.trim() ? '#D1CAF0' : 'var(--primary)', color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9375rem', cursor: textLoading || !textInput.trim() ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  {textLoading ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> \u05DE\u05E0\u05EA\u05D7...</> : <><Sparkles size={16} /> \u05E0\u05EA\u05D7\u05D9 \u05E2\u05DD AI</>}
+                </button>
+              </div>
+            )}
+
+            {/* PHOTO MODE */}
+            {photoMode && (
+              <div>
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileSelect} style={{ display: 'none' }} capture="environment" />
+                {!photoPreview ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ border: '2px dashed #EDE9FE', borderRadius: '16px', padding: '2.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', background: 'var(--primary-light)' }}>
+                    <Camera size={40} style={{ color: 'var(--primary)' }} />
+                    <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>\u05E6\u05DC\u05DE\u05D9 \u05D0\u05D5 \u05D1\u05D7\u05E8\u05D9 \u05EA\u05DE\u05D5\u05E0\u05D4</p>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0, textAlign: 'center' }}>AI \u05D9\u05E0\u05EA\u05D7 \u05D0\u05EA \u05D4\u05D0\u05E8\u05D5\u05D7\u05D4 \u05D5\u05D9\u05D7\u05E9\u05D1 \u05E2\u05E8\u05DB\u05D9\u05DD \u05EA\u05D6\u05D5\u05E0\u05EA\u05D9\u05D9\u05DD</p>
+                  </div>
+                ) : (
+                  <div>
+                    <img src={photoPreview} alt="meal" style={{ width: '100%', borderRadius: '16px', maxHeight: '200px', objectFit: 'cover' }} />
+                    {photoLoading && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
+                        <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                        \u05DE\u05E0\u05EA\u05D7 \u05EA\u05DE\u05D5\u05E0\u05D4...
+                      </div>
+                    )}
+                    <button onClick={() => { setPhotoPreview(null); setPhotoResult(null) }}
+                      style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      \u05D1\u05D7\u05E8\u05D9 \u05EA\u05DE\u05D5\u05E0\u05D4 \u05D0\u05D7\u05E8\u05EA
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Error */}
+            {textError && (
+              <div style={{ marginTop: '0.75rem', background: '#FFF0F2', border: '1.5px solid #FFD0D8', borderRadius: '12px', padding: '0.75rem', fontSize: '0.875rem', color: '#C0002A' }}>
+                {textError}
+              </div>
+            )}
+
+            {/* RESULTS */}
+            {(textResult || photoResult) && (
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <Sparkles size={16} style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>\u05EA\u05D5\u05E6\u05D0\u05D5\u05EA \u05D4\u05E0\u05D9\u05EA\u05D5\u05D7</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.5rem', borderRadius: '8px' }}>~\u05D0\u05D9\u05DE\u05D5\u05D3</span>
+                </div>
+
+                {(textResult?.items || photoResult?.items || []).map((item: any, i: number) => (
+                  <div key={i} style={{ background: '#F8F7FF', borderRadius: '12px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{item.name}</span>
+                      <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>{Math.round(item.calories)} \u05E7\u05E7"\u05DC</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.375rem', fontSize: '0.75rem', color: 'var(--text-sub)' }}>
+                      {item.quantity && <span>{item.quantity}{item.unit || '\u05D2'}</span>}
+                      <span>\u05D7\u05DC\u05D1 {Math.round(item.protein || 0)}\u05D2</span>
+                      <span>\u05E4\u05D7\u05DE {Math.round(item.carbs || 0)}\u05D2</span>
+                      <span>\u05E9\u05D5\u05DE {Math.round(item.fat || 0)}\u05D2</span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Totals */}
+                {activeResult?.totals && (
+                  <div style={{ background: 'linear-gradient(135deg, var(--primary-light), #F0FAD6)', borderRadius: '14px', padding: '0.875rem', marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', textAlign: 'center', gap: '0.5rem' }}>
+                    {[
+                      { label: '\u05E7\u05DC\u05D5\u05E8\u05D9\u05D5\u05EA', value: Math.round(activeResult.totals.calories || 0), color: 'var(--primary)' },
+                      { label: '\u05D7\u05DC\u05D1\u05D5\u05DF', value: Math.round(activeResult.totals.protein || 0) + '\u05D2', color: '#3B82F6' },
+                      { label: '\u05E4\u05D7\u05DE\u05D9\u05DE\u05D5\u05EA', value: Math.round(activeResult.totals.carbs || 0) + '\u05D2', color: 'var(--orange)' },
+                      { label: '\u05E9\u05D5\u05DE\u05DF', value: Math.round(activeResult.totals.fat || 0) + '\u05D2', color: 'var(--teal)' },
+                    ].map(({ label, value, color }) => (
+                      <div key={label}>
+                        <p style={{ fontWeight: 900, fontSize: '1.125rem', color, margin: 0 }}>{value}</p>
+                        <p style={{ fontSize: '0.6875rem', color: 'var(--text-sub)', margin: 0 }}>{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Notes from AI */}
+                {activeResult?.healthNotes && (
+                  <div style={{ background: '#F0FAD6', borderRadius: '12px', padding: '0.75rem', marginBottom: '0.75rem', fontSize: '0.8125rem', color: '#3D6B00', lineHeight: 1.5 }}>
+                    💡 {activeResult.healthNotes}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => saveEntries(textResult?.items || photoResult?.items || [])}
+                  disabled={saving}
+                  style={{ width: '100%', padding: '0.9375rem', borderRadius: '14px', border: 'none', background: saving ? '#D1CAF0' : 'linear-gradient(135deg, var(--primary), #9747FF)', color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: '1rem', cursor: saving ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> \u05E9\u05D5\u05DE\u05E8...</> : <><Check size={16} /> \u05D0\u05E9\u05E8\u05D9 \u05D5\u05D4\u05D5\u05E1\u05D9\u05E4\u05D9 \u05DC\u05D9\u05D5\u05DE\u05DF</>}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Meals */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-slate-700 dark:text-slate-200">ארוחות</h2>
-        <button className="flex items-center gap-1 text-sm text-primary-600 font-medium">
-          <Plus size={16} />
-          הוסף ארוחה
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {meals.map(meal => (
-          <MealCard key={meal.id} meal={meal} onStatusChange={handleStatusChange} />
-        ))}
-      </div>
-
-      {/* Medical warning */}
-      <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
-        <AlertCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-700 dark:text-amber-400">המערכת אינה מחליפה ייעוץ של רופא או תזונאי מוסמך.</p>
-      </div>
+      )}
     </div>
   )
 }
