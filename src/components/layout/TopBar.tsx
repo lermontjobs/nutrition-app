@@ -8,7 +8,7 @@ export function TopBar() {
   if (!session) return null
 
   const hour = new Date().getHours()
-  const greeting = hour < 5 ? '×œ×™×œ×” ×˜×•×‘' : hour < 12 ? '×‘×•×§×¨ ×˜×•×‘' : hour < 17 ? '×¦×”×¨×™×™× ×˜×•×‘×™×' : hour < 21 ? '×¢×¨×‘ ×˜×•×‘' : '×œ×™×œ×” ×˜×•×‘'
+  const greeting = hour < 5 ? 'Ã—Å“Ã—â„¢Ã—Å“Ã—â€ Ã—ËœÃ—â€¢Ã—â€˜' : hour < 12 ? 'Ã—â€˜Ã—â€¢Ã—Â§Ã—Â¨ Ã—ËœÃ—â€¢Ã—â€˜' : hour < 17 ? 'Ã—Â¦Ã—â€Ã—Â¨Ã—â„¢Ã—â„¢Ã—Â Ã—ËœÃ—â€¢Ã—â€˜Ã—â„¢Ã—Â' : hour < 21 ? 'Ã—Â¢Ã—Â¨Ã—â€˜ Ã—ËœÃ—â€¢Ã—â€˜' : 'Ã—Å“Ã—â„¢Ã—Å“Ã—â€ Ã—ËœÃ—â€¢Ã—â€˜'
   const firstName = session.user?.name?.split(' ')[0] || ''
 
   return (
@@ -20,14 +20,14 @@ export function TopBar() {
       <div style={{ maxWidth: '480px', margin: '0 auto', padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Greeting */}
         <div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-sub)', margin: 0, fontWeight: 500 }}>{greeting} âœ¨</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-sub)', margin: 0, fontWeight: 500 }}>{greeting} Ã¢Å“Â¨</p>
           <p style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.2 }}>{firstName}</p>
         </div>
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/nutrime-logo.png" alt="NutriMe" style={{ width: '2.75rem', height: '2.75rem', objectFit: 'contain', borderRadius: '12px' }} />
+          <img src="https://i.imgur.com/3JKAWOe.png" alt="NutriMe" style={{ width: '2.75rem', height: '2.75rem', objectFit: 'contain', borderRadius: '12px' }} />
           <span style={{ fontWeight: 800, fontSize: '1.0625rem', background: 'linear-gradient(135deg, var(--primary), var(--coral))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>NutriMe</span>
         </div>
 
