@@ -1,0 +1,4 @@
+Microsoft Windows [Version 10.0.26200.9457]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\yigal\AppData\Roaming\Genspark Claw\users\55a5c202-b16f-495b-94e9-6156314cf13b\workspace\nutrition-app>
