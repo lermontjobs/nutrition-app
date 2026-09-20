@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError('')
     const res = await signIn('credentials', { email, password, redirect: false })
     if (res?.ok) router.push('/')
-    else { setError('אימייל או סיסמה שגויים'); setLoading(false) }
+    else { setError('××™×ž×™×™×œ ××• ×¡×™×¡×ž×” ×©×’×•×™×™×'); setLoading(false) }
   }
 
   return (
@@ -30,18 +30,18 @@ export default function LoginPage() {
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logo.png"
+          src="/nutrime-logo.png"
           alt="NutriMe"
           style={{ width: '10rem', height: '10rem', objectFit: 'contain', margin: '0 auto 0.75rem', display: 'block', filter: 'drop-shadow(0 8px 28px rgba(108,76,241,0.28))' }}
         />
         <h1 style={{ fontSize: '2.25rem', fontWeight: 900, background: 'linear-gradient(135deg, var(--primary), var(--coral))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>NutriMe</h1>
-        <p style={{ color: 'var(--text-sub)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>חזקה. בריאה. בשליטה. 💪</p>
+        <p style={{ color: 'var(--text-sub)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>×—×–×§×”. ×‘×¨×™××”. ×‘×©×œ×™×˜×”. ðŸ’ª</p>
       </div>
 
       {/* Card */}
       <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.375rem' }}>ברוכה הבאה</h2>
-        <p style={{ color: 'var(--text-sub)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>התחברי לחשבון שלך והמשיכי במסע</p>
+        <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.375rem' }}>×‘×¨×•×›×” ×”×‘××”</h2>
+        <p style={{ color: 'var(--text-sub)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>×”×ª×—×‘×¨×™ ×œ×—×©×‘×•×Ÿ ×©×œ×š ×•×”×ž×©×™×›×™ ×‘×ž×¡×¢</p>
 
         {error && (
           <div style={{ background: '#FFF0F2', border: '1.5px solid #FFD0D8', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#C0002A', fontWeight: 500 }}>
@@ -51,7 +51,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>אימייל</label>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>××™×ž×™×™×œ</label>
             <input
               type="email" value={email} onChange={e => setEmail(e.target.value)} required
               placeholder="your@email.com"
@@ -61,11 +61,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>סיסמה</label>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>×¡×™×¡×ž×”</label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="input-field"
                 style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '3rem' }}
               />
@@ -79,20 +79,20 @@ export default function LoginPage() {
           <button type="submit" disabled={loading}
             className="btn-primary"
             style={{ width: '100%', padding: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', opacity: loading ? 0.7 : 1 }}>
-            {loading ? <><Loader2 size={18} className="animate-spin" /> מתחברת...</> : 'כניסה 🚀'}
+            {loading ? <><Loader2 size={18} className="animate-spin" /> ×ž×ª×—×‘×¨×ª...</> : '×›× ×™×¡×” ðŸš€'}
           </button>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-sub)' }}>
-          אין לך חשבון?{' '}
+          ××™×Ÿ ×œ×š ×—×©×‘×•×Ÿ?{' '}
           <Link href="/auth/register" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}>
-            הירשמי כאן
+            ×”×™×¨×©×ž×™ ×›××Ÿ
           </Link>
         </p>
       </div>
 
       <p style={{ marginTop: '2rem', fontSize: '0.75rem', color: 'var(--text-sub)', textAlign: 'center', maxWidth: '320px', lineHeight: 1.5 }}>
-        ⚕️ המערכת אינה מחליפה ייעוץ תזונאי מקצועי
+        âš•ï¸ ×”×ž×¢×¨×›×ª ××™× ×” ×ž×—×œ×™×¤×” ×™×™×¢×•×¥ ×ª×–×•× ××™ ×ž×§×¦×•×¢×™
       </p>
     </div>
   )
