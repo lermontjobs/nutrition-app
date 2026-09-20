@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useSession } from 'next-auth/react'
 import { Bell, Flame } from 'lucide-react'
@@ -8,7 +8,7 @@ export function TopBar() {
   if (!session) return null
 
   const hour = new Date().getHours()
-  const greeting = hour < 5 ? '\u05DC\u05D9\u05DC\u05D4 \u05D8\u05D5\u05D1' : hour < 12 ? '\u05D1\u05D5\u05E7\u05E8 \u05D8\u05D5\u05D1' : hour < 17 ? '\u05E6\u05D4\u05E8\u05D9\u05D9\u05DD \u05D8\u05D5\u05D1\u05D9\u05DD' : hour < 21 ? '\u05E2\u05E8\u05D1 \u05D8\u05D5\u05D1' : '\u05DC\u05D9\u05DC\u05D4 \u05D8\u05D5\u05D1'
+  const greeting = hour < 5 ? 'לילה טוב' : hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : hour < 21 ? 'ערב טוב' : 'לילה טוב'
   const firstName = session.user?.name?.split(' ')[0] || ''
 
   return (
@@ -21,7 +21,7 @@ export function TopBar() {
 
         {/* Greeting */}
         <div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-sub)', margin: 0, fontWeight: 500 }}>{greeting} \u2728</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-sub)', margin: 0, fontWeight: 500 }}>{greeting} ✨</p>
           <p style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.2 }}>{firstName}</p>
         </div>
 

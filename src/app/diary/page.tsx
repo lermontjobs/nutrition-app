@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
@@ -26,19 +26,19 @@ interface DayLog {
 }
 
 const MEAL_TYPES = [
-  { key: 'breakfast', label: '\u05D1\u05D5\u05E7\u05E8', emoji: '\u2600\uFE0F' },
-  { key: 'morning_snack', label: '\u05E0\u05E9\u05E0\u05E9 \u05D1\u05D5\u05E7\u05E8', emoji: '\u{1F34E}' },
-  { key: 'lunch', label: '\u05E6\u05D4\u05E8\u05D9\u05D9\u05DD', emoji: '\u{1F957}' },
-  { key: 'afternoon_snack', label: '\u05E0\u05E9\u05E0\u05E9 \u05D0\u05D7\u05D4"\u05E6', emoji: '\u{1F330}' },
-  { key: 'dinner', label: '\u05E2\u05E8\u05D1', emoji: '\u{1F319}' },
+  { key: 'breakfast', label: 'בוקר', emoji: '☀️' },
+  { key: 'morning_snack', label: 'נשנש בוקר', emoji: '\u{1F34E}' },
+  { key: 'lunch', label: 'צהריים', emoji: '\u{1F957}' },
+  { key: 'afternoon_snack', label: 'נשנש אחה"צ', emoji: '\u{1F330}' },
+  { key: 'dinner', label: 'ערב', emoji: '\u{1F319}' },
 ]
 
 const MEAL_LABELS: Record<string, string> = {
-  breakfast: '\u05D1\u05D5\u05E7\u05E8',
-  morning_snack: '\u05E0\u05E9\u05E0\u05E9 \u05D1\u05D5\u05E7\u05E8',
-  lunch: '\u05E6\u05D4\u05E8\u05D9\u05D9\u05DD',
-  afternoon_snack: '\u05E0\u05E9\u05E0\u05E9 \u05D0\u05D7\u05D4"\u05E6',
-  dinner: '\u05E2\u05E8\u05D1',
+  breakfast: 'בוקר',
+  morning_snack: 'נשנש בוקר',
+  lunch: 'צהריים',
+  afternoon_snack: 'נשנש אחה"צ',
+  dinner: 'ערב',
 }
 
 export default function DiaryPage() {
@@ -90,9 +90,9 @@ export default function DiaryPage() {
           if (!grouped[mt]) grouped[mt] = { id: mt, date: dateStr, mealType: mt, logEntries: [] }
           grouped[mt].logEntries.push({
             id: log.id,
-            foodName: log.food?.name || log.foodName || '\u05D0\u05D5\u05DB\u05DC',
+            foodName: log.food?.name || log.foodName || 'אוכל',
             quantity: log.quantity || 0,
-            unit: log.unit || '\u05D2',
+            unit: log.unit || 'ג',
             calories: log.calories || 0,
             protein: log.protein || 0,
             carbs: log.carbs || 0,
@@ -155,8 +155,8 @@ export default function DiaryPage() {
       })
       const d = await res.json()
       if (d.items) setTextResult(d)
-      else setTextError(d.error || '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E0\u05D9\u05EA\u05D5\u05D7')
-    } catch { setTextError('\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D7\u05D9\u05D1\u05D5\u05E8') }
+      else setTextError(d.error || 'שגיאה בניתוח')
+    } catch { setTextError('שגיאה בחיבור') }
     finally { setTextLoading(false) }
   }
 
@@ -170,8 +170,8 @@ export default function DiaryPage() {
       const res = await fetch('/api/ai/analyze-meal', { method: 'POST', body: formData })
       const d = await res.json()
       if (d.items || d.totals) setPhotoResult(d)
-      else setTextError(d.error || '\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05E0\u05D9\u05EA\u05D5\u05D7 \u05EA\u05DE\u05D5\u05E0\u05D4')
-    } catch { setTextError('\u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D7\u05D9\u05D1\u05D5\u05E8') }
+      else setTextError(d.error || 'שגיאה בניתוח תמונה')
+    } catch { setTextError('שגיאה בחיבור') }
     finally { setPhotoLoading(false) }
   }
 
@@ -196,7 +196,7 @@ export default function DiaryPage() {
             mealType: addMealType,
             foodName: item.name,
             quantity: item.quantity || 100,
-            unit: item.unit || '\u05D2\u05E8\u05DD',
+            unit: item.unit || 'גרם',
             calories: Math.round(item.calories || 0),
             protein: Math.round(item.protein || 0),
             carbs: Math.round(item.carbs || 0),
@@ -239,7 +239,7 @@ export default function DiaryPage() {
         </button>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontWeight: 700, color: 'var(--text-main)', margin: 0, fontSize: '1rem' }}>
-            {isToday ? '\u05D4\u05D9\u05D5\u05DD' : date.toLocaleDateString('he-IL', { weekday: 'long' })}
+            {isToday ? 'היום' : date.toLocaleDateString('he-IL', { weekday: 'long' })}
           </p>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0 }}>
             {date.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -253,17 +253,17 @@ export default function DiaryPage() {
       {/* Daily summary */}
       <div className="card" style={{ padding: '1.125rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
-          <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>\u05E1\u05D9\u05DB\u05D5\u05DD \u05D9\u05D5\u05DE\u05D9</span>
+          <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>סיכום יומי</span>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: totalCals > goals.dailyCalories ? 'var(--coral)' : 'var(--lime)', background: totalCals > goals.dailyCalories ? 'var(--coral-light)' : '#F0FAD6', padding: '0.25rem 0.75rem', borderRadius: '20px' }}>
-            {Math.max(0, goals.dailyCalories - totalCals)} \u05E7\u05E7"\u05DC \u05E0\u05D5\u05EA\u05E8\u05D5
+            {Math.max(0, goals.dailyCalories - totalCals)} קק"ל נותרו
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.875rem' }}>
           {[
-            { label: '\u05E7\u05DC\u05D5\u05E8\u05D9\u05D5\u05EA', value: totalCals, target: goals.dailyCalories, color: 'var(--primary)' },
-            { label: '\u05D7\u05DC\u05D1\u05D5\u05DF', value: totalProtein, target: goals.dailyProtein, color: '#3B82F6' },
-            { label: '\u05E4\u05D7\u05DE\u05D9\u05DE\u05D5\u05EA', value: totalCarbs, target: goals.dailyCarbs, color: 'var(--orange)' },
-            { label: '\u05E9\u05D5\u05DE\u05DF', value: totalFat, target: goals.dailyFat, color: 'var(--teal)' },
+            { label: 'קלוריות', value: totalCals, target: goals.dailyCalories, color: 'var(--primary)' },
+            { label: 'חלבון', value: totalProtein, target: goals.dailyProtein, color: '#3B82F6' },
+            { label: 'פחמימות', value: totalCarbs, target: goals.dailyCarbs, color: 'var(--orange)' },
+            { label: 'שומן', value: totalFat, target: goals.dailyFat, color: 'var(--teal)' },
           ].map(({ label, value, target, color }) => (
             <div key={label} style={{ textAlign: 'center', background: '#F8F7FF', borderRadius: '12px', padding: '0.625rem 0.375rem' }}>
               <p style={{ fontSize: '1.125rem', fontWeight: 900, color, margin: 0, lineHeight: 1 }}>{value}</p>
@@ -286,19 +286,19 @@ export default function DiaryPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.25rem' }}>{emoji}</span>
                 <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>{label}</span>
-                {mealCals > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', background: '#F0EEF9', padding: '0.125rem 0.5rem', borderRadius: '20px' }}>{mealCals} \u05E7\u05E7"\u05DC</span>}
+                {mealCals > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', background: '#F0EEF9', padding: '0.125rem 0.5rem', borderRadius: '20px' }}>{mealCals} קק"ל</span>}
               </div>
               <button
                 onClick={() => { setAddMealType(key); setShowAddModal(true); setTextInput(''); setTextResult(null); setPhotoResult(null); setPhotoPreview(null); setPhotoMode(false); setTextError('') }}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--primary-light)', border: 'none', borderRadius: '10px', padding: '0.375rem 0.75rem', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8125rem', fontFamily: 'inherit' }}>
                 <Plus size={14} />
-                \u05D4\u05D5\u05E1\u05D9\u05E4\u05D9
+                הוסיפי
               </button>
             </div>
 
             {entries.length === 0 && (
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0, textAlign: 'center', padding: '0.5rem 0' }}>
-                \u05DC\u05D0 \u05E0\u05E8\u05E9\u05DD \u05E2\u05D3\u05D9\u05D9\u05DF
+                לא נרשם עדיין
               </p>
             )}
 
@@ -307,9 +307,9 @@ export default function DiaryPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>{entry.foodName}</span>
-                    {entry.isEstimated && <span style={{ fontSize: '0.625rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.375rem', borderRadius: '8px' }}>~\u05D0\u05D9\u05DE\u05D5\u05D3</span>}
+                    {entry.isEstimated && <span style={{ fontSize: '0.625rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.375rem', borderRadius: '8px' }}>~אימוד</span>}
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>{entry.quantity}{entry.unit} · {entry.calories} \u05E7\u05E7"\u05DC · \u05D7\u05DC\u05D1 {entry.protein}\u05D2</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>{entry.quantity}{entry.unit} · {entry.calories} קק"ל · חלב {entry.protein}ג</span>
                 </div>
                 <button onClick={() => deleteEntry(entry.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E0D8F0', padding: '0.25rem' }}>
                   <Trash2 size={15} />
@@ -324,7 +324,7 @@ export default function DiaryPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: '14px', padding: '0.875rem' }}>
         <AlertCircle size={15} style={{ color: '#D97706', flexShrink: 0, marginTop: '0.125rem' }} />
         <p style={{ fontSize: '0.75rem', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
-          \u05D1\u05DC\u05D9\u05DC\u05D5\u05EA \u05E2\u05D9\u05D3\u05D5\u05D9 AI \u05D4\u05DD \u05D0\u05D9\u05DE\u05D5\u05D3\u05D9\u05DD. \u05D4\u05DE\u05E2\u05E8\u05DB\u05EA \u05D0\u05D9\u05E0\u05D4 \u05DE\u05D7\u05DC\u05D9\u05E4\u05D4 \u05D9\u05D9\u05E2\u05D5\u05E5 \u05EA\u05D6\u05D5\u05E0\u05D0\u05D9 \u05DE\u05E7\u05E6\u05D5\u05E2\u05D9.
+          בלילות עידוי AI הם אימודים. המערכת אינה מחליפה ייעוץ תזונאי מקצועי.
         </p>
       </div>
 
@@ -336,8 +336,8 @@ export default function DiaryPage() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
               <div>
-                <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-main)', margin: 0 }}>\u05D4\u05D5\u05E1\u05E4\u05D9 \u05D0\u05E8\u05D5\u05D7\u05D4</h3>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0 }}>\u05DC\u05D0\u05E8\u05D5\u05D7\u05EA {MEAL_LABELS[addMealType]}</p>
+                <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-main)', margin: 0 }}>הוספי ארוחה</h3>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0 }}>לארוחת {MEAL_LABELS[addMealType]}</p>
               </div>
               <button onClick={() => setShowAddModal(false)} style={{ background: '#F0EEF9', border: 'none', borderRadius: '10px', width: '2rem', height: '2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={16} style={{ color: 'var(--primary)' }} />
@@ -359,12 +359,12 @@ export default function DiaryPage() {
               <button onClick={() => { setPhotoMode(false); setPhotoResult(null); setPhotoPreview(null) }}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '14px', border: `2px solid ${!photoMode ? 'var(--primary)' : '#EDE9FE'}`, background: !photoMode ? 'var(--primary-light)' : 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.875rem', color: !photoMode ? 'var(--primary)' : 'var(--text-sub)' }}>
                 <Sparkles size={16} />
-                \u05EA\u05D9\u05D0\u05D5\u05E8 \u05D1\u05D8\u05E7\u05E1\u05D8
+                תיאור בטקסט
               </button>
               <button onClick={() => { setPhotoMode(true); setTextResult(null) }}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '14px', border: `2px solid ${photoMode ? 'var(--primary)' : '#EDE9FE'}`, background: photoMode ? 'var(--primary-light)' : 'white', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.875rem', color: photoMode ? 'var(--primary)' : 'var(--text-sub)' }}>
                 <Camera size={16} />
-                \u05E6\u05D9\u05DC\u05D5\u05DD / \u05EA\u05DE\u05D5\u05E0\u05D4
+                צילום / תמונה
               </button>
             </div>
 
@@ -374,7 +374,7 @@ export default function DiaryPage() {
                 <textarea
                   value={textInput}
                   onChange={e => setTextInput(e.target.value)}
-                  placeholder="\u05DC\u05D3\u05D5\u05D2\u05DE\u05D0: \u05D0\u05DB\u05DC\u05EA\u05D9 \u05E9\u05E0\u05D9 \u05D7\u05D1\u05D9\u05EA\u05D5\u05EA \u05E2\u05DD \u05D2\u05D1\u05D9\u05E0\u05D4 \u05DC\u05D1\u05E0\u05D4, \u05E4\u05E8\u05D5\u05E1\u05EA \u05DC\u05D7\u05DD \u05DE\u05D7\u05D9\u05D8\u05D4 \u05DE\u05DC\u05D0\u05D4 \u05D5\u05E7\u05E4\u05D4"
+                  placeholder="לדוגמא: אכלתי שני חביתות עם גבינה לבנה, פרוסת לחם מחיטה מלאה וקפה"
                   rows={3}
                   style={{ width: '100%', boxSizing: 'border-box', padding: '0.875rem', borderRadius: '14px', border: '2px solid #EDE9FE', fontFamily: 'Heebo, sans-serif', fontSize: '0.9375rem', resize: 'none', outline: 'none', color: 'var(--text-main)', direction: 'rtl' }}
                   onFocus={e => e.target.style.borderColor = 'var(--primary)'}
@@ -384,7 +384,7 @@ export default function DiaryPage() {
                   onClick={analyzeText}
                   disabled={textLoading || !textInput.trim()}
                   style={{ width: '100%', marginTop: '0.75rem', padding: '0.875rem', borderRadius: '14px', border: 'none', background: textLoading || !textInput.trim() ? '#D1CAF0' : 'var(--primary)', color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9375rem', cursor: textLoading || !textInput.trim() ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  {textLoading ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> \u05DE\u05E0\u05EA\u05D7...</> : <><Sparkles size={16} /> \u05E0\u05EA\u05D7\u05D9 \u05E2\u05DD AI</>}
+                  {textLoading ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> מנתח...</> : <><Sparkles size={16} /> נתחי עם AI</>}
                 </button>
               </div>
             )}
@@ -398,8 +398,8 @@ export default function DiaryPage() {
                     onClick={() => fileInputRef.current?.click()}
                     style={{ border: '2px dashed #EDE9FE', borderRadius: '16px', padding: '2.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', background: 'var(--primary-light)' }}>
                     <Camera size={40} style={{ color: 'var(--primary)' }} />
-                    <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>\u05E6\u05DC\u05DE\u05D9 \u05D0\u05D5 \u05D1\u05D7\u05E8\u05D9 \u05EA\u05DE\u05D5\u05E0\u05D4</p>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0, textAlign: 'center' }}>AI \u05D9\u05E0\u05EA\u05D7 \u05D0\u05EA \u05D4\u05D0\u05E8\u05D5\u05D7\u05D4 \u05D5\u05D9\u05D7\u05E9\u05D1 \u05E2\u05E8\u05DB\u05D9\u05DD \u05EA\u05D6\u05D5\u05E0\u05EA\u05D9\u05D9\u05DD</p>
+                    <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>צלמי או בחרי תמונה</p>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-sub)', margin: 0, textAlign: 'center' }}>AI ינתח את הארוחה ויחשב ערכים תזונתיים</p>
                   </div>
                 ) : (
                   <div>
@@ -407,12 +407,12 @@ export default function DiaryPage() {
                     {photoLoading && (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
                         <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                        \u05DE\u05E0\u05EA\u05D7 \u05EA\u05DE\u05D5\u05E0\u05D4...
+                        מנתח תמונה...
                       </div>
                     )}
                     <button onClick={() => { setPhotoPreview(null); setPhotoResult(null) }}
                       style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}>
-                      \u05D1\u05D7\u05E8\u05D9 \u05EA\u05DE\u05D5\u05E0\u05D4 \u05D0\u05D7\u05E8\u05EA
+                      בחרי תמונה אחרת
                     </button>
                   </div>
                 )}
@@ -431,21 +431,21 @@ export default function DiaryPage() {
               <div style={{ marginTop: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <Sparkles size={16} style={{ color: 'var(--primary)' }} />
-                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>\u05EA\u05D5\u05E6\u05D0\u05D5\u05EA \u05D4\u05E0\u05D9\u05EA\u05D5\u05D7</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.5rem', borderRadius: '8px' }}>~\u05D0\u05D9\u05DE\u05D5\u05D3</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)' }}>תוצאות הניתוח</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--orange)', background: '#FFF3E0', padding: '0.125rem 0.5rem', borderRadius: '8px' }}>~אימוד</span>
                 </div>
 
                 {(textResult?.items || photoResult?.items || []).map((item: any, i: number) => (
                   <div key={i} style={{ background: '#F8F7FF', borderRadius: '12px', padding: '0.75rem', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{item.name}</span>
-                      <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>{Math.round(item.calories)} \u05E7\u05E7"\u05DC</span>
+                      <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>{Math.round(item.calories)} קק"ל</span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.375rem', fontSize: '0.75rem', color: 'var(--text-sub)' }}>
-                      {item.quantity && <span>{item.quantity}{item.unit || '\u05D2'}</span>}
-                      <span>\u05D7\u05DC\u05D1 {Math.round(item.protein || 0)}\u05D2</span>
-                      <span>\u05E4\u05D7\u05DE {Math.round(item.carbs || 0)}\u05D2</span>
-                      <span>\u05E9\u05D5\u05DE {Math.round(item.fat || 0)}\u05D2</span>
+                      {item.quantity && <span>{item.quantity}{item.unit || 'ג'}</span>}
+                      <span>חלב {Math.round(item.protein || 0)}ג</span>
+                      <span>פחמ {Math.round(item.carbs || 0)}ג</span>
+                      <span>שומ {Math.round(item.fat || 0)}ג</span>
                     </div>
                   </div>
                 ))}
@@ -454,10 +454,10 @@ export default function DiaryPage() {
                 {activeResult?.totals && (
                   <div style={{ background: 'linear-gradient(135deg, var(--primary-light), #F0FAD6)', borderRadius: '14px', padding: '0.875rem', marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', textAlign: 'center', gap: '0.5rem' }}>
                     {[
-                      { label: '\u05E7\u05DC\u05D5\u05E8\u05D9\u05D5\u05EA', value: Math.round(activeResult.totals.calories || 0), color: 'var(--primary)' },
-                      { label: '\u05D7\u05DC\u05D1\u05D5\u05DF', value: Math.round(activeResult.totals.protein || 0) + '\u05D2', color: '#3B82F6' },
-                      { label: '\u05E4\u05D7\u05DE\u05D9\u05DE\u05D5\u05EA', value: Math.round(activeResult.totals.carbs || 0) + '\u05D2', color: 'var(--orange)' },
-                      { label: '\u05E9\u05D5\u05DE\u05DF', value: Math.round(activeResult.totals.fat || 0) + '\u05D2', color: 'var(--teal)' },
+                      { label: 'קלוריות', value: Math.round(activeResult.totals.calories || 0), color: 'var(--primary)' },
+                      { label: 'חלבון', value: Math.round(activeResult.totals.protein || 0) + 'ג', color: '#3B82F6' },
+                      { label: 'פחמימות', value: Math.round(activeResult.totals.carbs || 0) + 'ג', color: 'var(--orange)' },
+                      { label: 'שומן', value: Math.round(activeResult.totals.fat || 0) + 'ג', color: 'var(--teal)' },
                     ].map(({ label, value, color }) => (
                       <div key={label}>
                         <p style={{ fontWeight: 900, fontSize: '1.125rem', color, margin: 0 }}>{value}</p>
@@ -478,7 +478,7 @@ export default function DiaryPage() {
                   onClick={() => saveEntries(textResult?.items || photoResult?.items || [])}
                   disabled={saving}
                   style={{ width: '100%', padding: '0.9375rem', borderRadius: '14px', border: 'none', background: saving ? '#D1CAF0' : 'linear-gradient(135deg, var(--primary), #9747FF)', color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: '1rem', cursor: saving ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> \u05E9\u05D5\u05DE\u05E8...</> : <><Check size={16} /> \u05D0\u05E9\u05E8\u05D9 \u05D5\u05D4\u05D5\u05E1\u05D9\u05E4\u05D9 \u05DC\u05D9\u05D5\u05DE\u05DF</>}
+                  {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> שומר...</> : <><Check size={16} /> אשרי והוסיפי ליומן</>}
                 </button>
               </div>
             )}
