@@ -25,10 +25,9 @@ export function TopBar() {
         </div>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-          <div style={{ width: '2rem', height: '2rem', background: 'linear-gradient(135deg, var(--primary), var(--coral))', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '1rem' }}>⚡</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="NutriMe" style={{ width: '2.75rem', height: '2.75rem', objectFit: 'contain', borderRadius: '12px' }} />
           <span style={{ fontWeight: 800, fontSize: '1.0625rem', background: 'linear-gradient(135deg, var(--primary), var(--coral))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>NutriMe</span>
         </div>
 
