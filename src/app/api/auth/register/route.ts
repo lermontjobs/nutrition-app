@@ -61,8 +61,7 @@ export async function POST(req: Request) {
         favorites: favorites || '',
         medicalNotes: medicalNotes || '',
         maxPrepTime: Number(maxPrepTime) || 30,
-        mealTimes: mealTimes || '',
-        workoutTimes: workoutTimes || '',
+
       },
     })
 
