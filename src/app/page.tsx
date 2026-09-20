@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Plus, Droplets, ChevronLeft } from 'lucide-react'
 import { MealCamera } from '@/components/MealCamera'
+import { useRouter } from 'next/navigation'
 
 interface DashboardData {
   goals: { dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFat: number; dailyWater: number; currentWeight: number; targetWeight: number } | null
@@ -65,6 +66,7 @@ function WaterDroplets({ count, target, onAdd }: { count: number; target: number
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [waterGlasses, setWaterGlasses] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -81,7 +83,10 @@ export default function Dashboard() {
     } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { if (session) fetchData() }, [session, fetchData])
+  useEffect(() => {
+    if (status === 'unauthenticated') { router.push('/auth/login'); return }
+    if (session) fetchData()
+  }, [session, status, fetchData, router])
 
   const addWater = async () => {
     await fetch('/api/water', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: 0.25 }) })
@@ -95,7 +100,7 @@ export default function Dashboard() {
       ))}
     </div>
   )
-  if (!session) { redirect('/auth/login'); return null }
+  if (!session) return null
 
   const goals = data?.goals
   const eaten = data?.eatenTotals || { calories: 0, protein: 0, carbs: 0, fat: 0 }
