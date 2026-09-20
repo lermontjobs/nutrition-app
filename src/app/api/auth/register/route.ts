@@ -40,8 +40,7 @@ export async function POST(req: Request) {
         targetWeight: targetWeight ? Number(targetWeight) : null,
         goalType: goalType || 'lose',
         activityLevel: activityLevel || 'moderate',
-        workoutsPerWeek: Number(workoutsPerWeek) || 3,
-        targetDate: targetDate ? new Date(targetDate) : null,
+
         dailyCalories: Number(dailyCalories) || 2000,
         dailyProtein: Number(dailyProtein) || 150,
         dailyCarbs: Number(dailyCarbs) || 200,
